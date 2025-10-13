@@ -211,7 +211,7 @@ def call_meeting_matching_agent(state: MasterAgentState):
     
     def decide_to_continue(state: MeetingAgentState):
         if state.get("rewrite_count", 0) >= 2: 
-            logging.info(f"--- 재시도 횟수({state.get('rewrite_count', 0)}) 초과, 루프를 종료합니다. ---")
+            logging.info(f"--- 재시도 횟수({state.get('rewrite_count', 0)}) 초과했기에 루프를 종료합니다. ---")
             return END
         if state.get("decision") == "helpful":
             return END
