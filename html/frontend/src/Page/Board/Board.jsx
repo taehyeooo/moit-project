@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // 👈 useNavigate import
+import { useNavigate } from "react-router-dom"; // useNavigate import
 
 const Board = () => {
   const [posts, setPosts] = useState([]); // 👈 실제 데이터를 저장할 상태
