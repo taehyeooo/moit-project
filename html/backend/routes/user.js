@@ -57,7 +57,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: '사용자 이름과 비밀번호를 모두 입력해주세요.' });
     }
 
-    const user = await User.findOne({ username }).select('+password');
+    // Select both possible password fields
+    const user = await User.findOne({ username }).select('+password +password_hash');
     if (!user) {
       return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
@@ -66,7 +67,13 @@ router.post('/login', async (req, res) => {
         return res.status(403).json({ message: '비활성화된 계정입니다. 관리자에게 문의하세요.' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Determine which password field to use
+    const hashToCompare = user.password || user.password_hash;
+    if (!hashToCompare) {
+        return res.status(500).json({ message: '계정에 비밀번호 정보가 없어 로그인할 수 없습니다.' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, hashToCompare);
     if (!isValidPassword) {
       user.failedLoginAttempts += 1;
       user.lastLoginAttempt = new Date();
@@ -86,6 +93,12 @@ router.post('/login', async (req, res) => {
       });
     }
     
+    // Self-healing: If the old field was used, migrate it to the new standard.
+    if (user.password_hash && !user.password) {
+        user.password = user.password_hash;
+        user.password_hash = undefined;
+    }
+
     user.failedLoginAttempts = 0;
     user.lastLoginAttempt = new Date();
     user.isLoggedIn = true;
@@ -276,6 +289,25 @@ router.delete('/delete/:userId', async (req, res) => {
       res.json({ message: '사용자가 성공적으로 삭제되었습니다.' });
     } catch (error) {
       console.error("Delete User Error:", error);
+      res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * -----------------------------------------------------------
+ * DELETE /api/auth/delete-by-username/:username - 계정 삭제 (임시)
+ * -----------------------------------------------------------
+ */
+router.delete('/delete-by-username/:username', async (req, res) => {
+    try {
+      const { username } = req.params;
+      const user = await User.findOneAndDelete({ username: username });
+      if (!user) {
+        return res.status(404).json({ message: '해당 사용자 이름을 가진 사용자를 찾을 수 없습니다.' });
+      }
+      res.json({ message: `사용자 '${username}'이(가) 성공적으로 삭제되었습니다.` });
+    } catch (error) {
+      console.error("Delete User by Username Error:", error);
       res.status(500).json({ message: '서버 오류가 발생했습니다.' });
     }
 });
