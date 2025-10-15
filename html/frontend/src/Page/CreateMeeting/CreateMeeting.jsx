@@ -72,7 +72,14 @@ const CreateMeeting = () => {
         }
 
         try {
-            const meetingData = { ...formData, coverImage: imageUrl };
+            // 👇 --- [수정] AI 서버 요청을 위해 'time' 필드를 추가합니다. --- 👇
+            // Node.js 백엔드는 'date' 필드를 사용하고, AI 서버는 'time' 필드를 사용합니다.
+            // 두 필드 모두 포함하여 각 서버가 필요한 데이터를 사용할 수 있도록 합니다.
+            const meetingData = { 
+                ...formData, 
+                coverImage: imageUrl,
+                time: new Date(formData.date).toLocaleString('ko-KR') // 예: "2024. 7. 25. 오후 3:30:00"
+            };
             const response = await axios.post('/api/meetings', meetingData, { withCredentials: true });
 
             if (response.data.action === 'recommend') {
