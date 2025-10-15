@@ -98,6 +98,11 @@ const MeetingDetail = () => {
     
     const remainingSpots = meeting.maxParticipants - meeting.participants.length;
     const isHost = user && meeting && user._id === meeting.host._id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const meetingDate = new Date(meeting.date);
+    meetingDate.setHours(0, 0, 0, 0);
+    const isPast = meetingDate < today;
 
     return (
         <div className="bg-white pt-24 pb-12 min-h-screen">
@@ -126,7 +131,8 @@ const MeetingDetail = () => {
                             {isHost && (
                                 <button
                                     onClick={handleDeleteMeeting}
-                                    className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                                    disabled={isPast} // 지난 모임은 삭제 불가
+                                    className={`px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed`}
                                 >
                                     모임 삭제
                                 </button>
@@ -166,26 +172,21 @@ const MeetingDetail = () => {
                             </div>
                             
                             <p className="text-sm text-gray-500 text-center mb-2">
-                                {isParticipant ? '이미 참여하고 있는 모임입니다.' : (remainingSpots > 0 ? `마감까지 ${remainingSpots}자리 남았어요!` : '모집이 마감되었습니다!')}
+                                {isPast ? '종료된 모임입니다.' : (isParticipant ? '이미 참여하고 있는 모임입니다.' : (remainingSpots > 0 ? `마감까지 ${remainingSpots}자리 남았어요!` : '모집이 마감되었습니다!'))}
                             </p>
 
-                            {/* 👇 --- [수정] 버튼 로직 전체 변경 --- 👇 */}
-                            const isPast = new Date(meeting.date) < new Date();
-
-                            return (
-                                <button 
-                                    onClick={handleJoinOrLeaveMeeting}
-                                    disabled={isPast || (remainingSpots <= 0 && !isParticipant) || isSubmitting || isHost}
-                                    className={`w-full font-bold py-3 px-4 rounded-lg transition-colors 
-                                        ${isHost ? 'bg-gray-400 text-white cursor-not-allowed' : 
-                                         isParticipant ? (isPast ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600') + ' text-white' : 
-                                         (isPast ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700') + ' text-white'}
-                                        disabled:bg-gray-400 disabled:cursor-not-allowed`}
-                                >
-                                    {isPast ? '종료된 모임' : (isHost ? '당신은 호스트입니다' : (isSubmitting ? '처리 중...' : (isParticipant ? '신청 취소' : '신청하기')))}
-                                </button>
-                            );
-                        })()
+                            <button 
+                                onClick={handleJoinOrLeaveMeeting}
+                                disabled={isPast || (remainingSpots <= 0 && !isParticipant) || isSubmitting || isHost}
+                                className={`w-full font-bold py-3 px-4 rounded-lg transition-colors 
+                                    ${isPast ? 'bg-gray-400 text-white cursor-not-allowed' :
+                                     isHost ? 'bg-gray-400 text-white cursor-not-allowed' : 
+                                     isParticipant ? 'bg-red-500 hover:bg-red-600 text-white' : 
+                                     'bg-blue-600 hover:bg-blue-700 text-white'}
+                                    disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                            >
+                                {isPast ? '종료된 모임' : (isHost ? '당신은 호스트입니다' : (isSubmitting ? '처리 중...' : (isParticipant ? '신청 취소' : '신청하기')))}
+                            </button>
                         </div>
                     </div>
                 </div>
