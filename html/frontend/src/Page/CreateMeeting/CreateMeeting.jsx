@@ -72,18 +72,17 @@ const CreateMeeting = () => {
         }
 
         try {
-            // 👇 --- [수정] AI 서버 요청을 위해 'time' 필드를 추가합니다. --- 👇
-            // Node.js 백엔드는 'date' 필드를 사용하고, AI 서버는 'time' 필드를 사용합니다.
-            // 두 필드 모두 포함하여 각 서버가 필요한 데이터를 사용할 수 있도록 합니다.
             const meetingData = { 
                 ...formData, 
                 coverImage: imageUrl,
-                time: new Date(formData.date).toLocaleString('ko-KR') // 예: "2024. 7. 25. 오후 3:30:00"
             };
-            // 👇 --- [수정] AI 서버가 인식할 수 있도록 user_input 객체로 데이터를 감싸서 보냅니다. --- 👇
+
+            // AI 서버(main.py)는 user_input 객체 안에 모든 정보가 담겨있기를 기대합니다.
+            // Node.js 백엔드에서 이 형식으로 변환하여 AI 서버로 전달해야 합니다.
+            // 프론트엔드는 최종 모임 데이터와 AI 분석에 필요한 데이터를 모두 보냅니다.
             const payload = {
-                ...meetingData, // 기존 모임 데이터 (title, description 등)
-                user_input: meetingData // AI 분석을 위한 데이터
+                ...meetingData, // Node.js가 모임을 생성할 때 사용할 데이터
+                user_input: { ...meetingData } // Node.js가 AI 서버로 전달할 데이터
             };
             const response = await axios.post('/api/meetings', payload, { withCredentials: true });
 
