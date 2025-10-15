@@ -25,7 +25,7 @@
           // 3. 유효성 검사
           // 3-1. 모임 정보 및 현재 참여 인원 확인
           $stmt = $pdo->prepare("
-              SELECT m.organizer_id, m.max_members,
+              SELECT m.organizer_id, m.max_members, m.meeting_date,
                      (SELECT COUNT(*) FROM meeting_participants mp WHERE mp.meeting_id = m.id) + 1 as current_participants
               FROM meetings m WHERE m.id = ?
           ");
@@ -34,17 +34,23 @@
 
           if (!$meeting) { die("존재하지 않는 모임입니다."); }
 
-          // 3-2. 본인이 개설한 모임인지 확인
+          // 3-2. 모임 기간이 지났는지 확인
+          // meeting_date가 오늘 날짜보다 이전이면 신청 불가
+          if (strtotime($meeting['meeting_date']) < strtotime(date('Y-m-d'))) {
+              die("이미 기간이 지난 모임입니다. <a href='meeting.php'>돌아가기</a>");
+          }
+
+          // 3-3. 본인이 개설한 모임인지 확인
           if ($meeting['organizer_id'] == $user_id) {
               die("본인이 개설한 모임에는 참여할 수 없습니다. <a href='meeting.php'>돌아가기</a>");
           }
 
-          // 3-3. 모임 정원이 꽉 찼는지 확인
+          // 3-4. 모임 정원이 꽉 찼는지 확인
           if ($meeting['current_participants'] >= $meeting['max_members']) {
               die("모임 정원이 모두 찼습니다. <a href='meeting.php'>돌아가기</a>");
           }
 
-          // 3-4. 이미 참여한 모임인지 확인
+          // 3-5. 이미 참여한 모임인지 확인
           $stmt = $pdo->prepare("SELECT id FROM meeting_participants WHERE meeting_id = ? AND user_id = ?");
           $stmt->execute([$meeting_id, $user_id]);
           if ($stmt->fetch()) {

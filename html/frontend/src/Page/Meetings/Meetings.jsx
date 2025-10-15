@@ -129,8 +129,17 @@ const Meetings = () => {
 
     // 👇 --- [수정] 필터링 및 정렬 로직을 하나의 useEffect로 통합 --- 👇
     useEffect(() => {
-        // 1. 카테고리와 검색어로 필터링
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작
+
+        // 1. 카테고리, 검색어, 날짜로 필터링
         const currentFiltered = meetings.filter(meeting => {
+            const meetingDate = new Date(meeting.date);
+            meetingDate.setHours(0, 0, 0, 0); // 모임 날짜의 시작
+
+            const isPast = meetingDate < today; // 오늘 이전의 모임인지 확인
+            if (isPast) return false; // 지난 모임은 필터링
+
             const matchesCategory = activeFilter === '전체' || meeting.category === activeFilter;
             const matchesSearchTerm = meeting.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                       (meeting.category && meeting.category.toLowerCase().includes(searchTerm.toLowerCase()));
