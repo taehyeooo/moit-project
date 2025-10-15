@@ -34,7 +34,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password_hash: hashedPassword, name, nickname, email });
+    const user = new User({ username, password: hashedPassword, name, nickname, email });
     await user.save();
 
     res.status(201).json({ message: '회원가입이 완료되었습니다.' });
@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: '사용자 이름과 비밀번호를 모두 입력해주세요.' });
     }
 
-    const user = await User.findOne({ username }).select('+password_hash');
+    const user = await User.findOne({ username }).select('+password');
     if (!user) {
       return res.status(401).json({ message: '아이디 또는 비밀번호가 올바르지 않습니다.' });
     }
@@ -66,7 +66,7 @@ router.post('/login', async (req, res) => {
         return res.status(403).json({ message: '비활성화된 계정입니다. 관리자에게 문의하세요.' });
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       user.failedLoginAttempts += 1;
       user.lastLoginAttempt = new Date();
@@ -114,7 +114,7 @@ router.post('/login', async (req, res) => {
     });
 
     const userWithoutPassword = user.toObject();
-    delete userWithoutPassword.password_hash;
+    delete userWithoutPassword.password;
 
     res.json({ user: userWithoutPassword });
   } catch (error) {
@@ -140,7 +140,7 @@ router.post("/verify-token", async (req, res) => {
         return res.status(401).json({ message: "인증 실패" });
       }
       const userWithoutPassword = user.toObject();
-      delete userWithoutPassword.password_hash;
+      delete userWithoutPassword.password;
       res.json({ user: userWithoutPassword });
     } catch (error) {
       res.status(401).json({ message: "유효하지 않은 토큰입니다." });
@@ -181,7 +181,7 @@ router.get('/mypage', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await User.findById(userId).select('-password_hash');
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
     }
@@ -215,7 +215,7 @@ router.put('/profile', verifyToken, async (req, res) => {
         const { nickname, email, currentPassword, newPassword } = req.body;
         const userId = req.user.userId;
 
-        const user = await User.findById(userId).select('+password_hash');
+        const user = await User.findById(userId).select('+password');
         if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
@@ -242,17 +242,17 @@ router.put('/profile', verifyToken, async (req, res) => {
             if (!currentPassword) {
                 return res.status(400).json({ message: '현재 비밀번호를 입력해주세요.' });
             }
-            const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
             if (!isMatch) {
                 return res.status(401).json({ message: '현재 비밀번호가 일치하지 않습니다.' });
             }
-            user.password_hash = await bcrypt.hash(newPassword, 10);
+            user.password = await bcrypt.hash(newPassword, 10);
         }
 
         await user.save();
 
         const updatedUser = user.toObject();
-        delete updatedUser.password_hash;
+        delete updatedUser.password;
 
         res.json({ message: '프로필이 성공적으로 업데이트되었습니다.', user: updatedUser });
     } catch (error) {
