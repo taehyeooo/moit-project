@@ -80,7 +80,12 @@ const CreateMeeting = () => {
                 coverImage: imageUrl,
                 time: new Date(formData.date).toLocaleString('ko-KR') // 예: "2024. 7. 25. 오후 3:30:00"
             };
-            const response = await axios.post('/api/meetings', meetingData, { withCredentials: true });
+            // 👇 --- [수정] AI 서버가 인식할 수 있도록 user_input 객체로 데이터를 감싸서 보냅니다. --- 👇
+            const payload = {
+                ...meetingData, // 기존 모임 데이터 (title, description 등)
+                user_input: meetingData // AI 분석을 위한 데이터
+            };
+            const response = await axios.post('/api/meetings', payload, { withCredentials: true });
 
             if (response.data.action === 'recommend') {
                 navigate('/meetings/recommend', {
