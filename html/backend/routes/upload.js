@@ -25,13 +25,7 @@ const fileUpload = multer({
   }
 });
 
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ message: '인증되지 않은 요청입니다.' });
-  }
-  next();
-};
+const { verifyToken } = require('../utils/auth');
 
 router.post('/image', verifyToken, upload.single('image'), async (req, res) => {
   try {
