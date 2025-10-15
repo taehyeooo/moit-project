@@ -1,7 +1,8 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-
 const router = require('express').Router();
+const { v4: uuidv4 } = require('uuid');
+const { verifyToken } = require('../utils/auth');
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -14,28 +15,19 @@ const s3Client = new S3Client({
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024 
+    fileSize: 5 * 1024 * 1024
   }
 });
 
 const fileUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024 
+    fileSize: 50 * 1024 * 1024
   }
 });
 
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ message: '인증되지 않은 요청입니다.' });
-  }
-  next();
-};
-
 router.post('/image', verifyToken, upload.single('image'), async (req, res) => {
   try {
-    const { v4: uuidv4 } = await import('uuid');
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
