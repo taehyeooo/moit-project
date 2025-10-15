@@ -170,17 +170,22 @@ const MeetingDetail = () => {
                             </p>
 
                             {/* 👇 --- [수정] 버튼 로직 전체 변경 --- 👇 */}
-                            <button 
-                                onClick={handleJoinOrLeaveMeeting}
-                                disabled={(remainingSpots <= 0 && !isParticipant) || isSubmitting || isHost}
-                                className={`w-full font-bold py-3 px-4 rounded-lg transition-colors 
-                                    ${isHost ? 'bg-gray-400 text-white cursor-not-allowed' : 
-                                     isParticipant ? 'bg-red-500 hover:bg-red-600 text-white' : 
-                                     'bg-blue-600 hover:bg-blue-700 text-white'}
-                                    disabled:bg-gray-400 disabled:cursor-not-allowed`}
-                            >
-                                {isHost ? '당신은 호스트입니다' : (isSubmitting ? '처리 중...' : (isParticipant ? '신청 취소' : '신청하기'))}
-                            </button>
+                            const isPast = new Date(meeting.date) < new Date();
+
+                            return (
+                                <button 
+                                    onClick={handleJoinOrLeaveMeeting}
+                                    disabled={isPast || (remainingSpots <= 0 && !isParticipant) || isSubmitting || isHost}
+                                    className={`w-full font-bold py-3 px-4 rounded-lg transition-colors 
+                                        ${isHost ? 'bg-gray-400 text-white cursor-not-allowed' : 
+                                         isParticipant ? (isPast ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600') + ' text-white' : 
+                                         (isPast ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700') + ' text-white'}
+                                        disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                                >
+                                    {isPast ? '종료된 모임' : (isHost ? '당신은 호스트입니다' : (isSubmitting ? '처리 중...' : (isParticipant ? '신청 취소' : '신청하기')))}
+                                </button>
+                            );
+                        })()
                         </div>
                     </div>
                 </div>
